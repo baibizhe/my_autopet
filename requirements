@@ -1,1 +1,6 @@
 monai
+tqdm
+scikit-learn
+imageio
+matplotlib
+torchsummary
