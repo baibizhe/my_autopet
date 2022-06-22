@@ -1,0 +1,3 @@
+dataaugment 每次太慢，看能不能一次抓上来，或者直接一个前处理，把他们弄到固定size，看看cachedataset,
+看看 patch-based训练吧                       feature_size=12,
+太小了

@@ -10,9 +10,11 @@ class Tensorboard:
     def __init__(self, config):
         os.system("wandb login")
         os.system("wandb {}".format("online" if config.use_wandb else "offline"))
-        config.run_name = "traCoCo({}-label, unsup_weight={})[{}]".format(str(config.labeled_num),
-                                                                      str(config.unsup_weight),
-                                                                      str(config.dataset))
+        config.run_name = "autopet(arch = {}, resize={} ,aug={} , )".format(str(config.model),
+                                                                      str(config.target_size[0]),
+                                                                      str(config.aug_mode),
+
+                                                                            )
         self.tensor_board = wandb.init(project=config.project_name,
                                        name=config.run_name,
                                        config=config)
@@ -31,16 +33,7 @@ class Tensorboard:
             self.tensor_board.log({info: info_dict[info]})
         return
 
-    def upload_wandb_table(self, info_dict):
-        table = wandb.Table(data=info_dict['entire_prob_boundary'],
-                            columns=["boundary", "rate"])
-        wandb.log({"pass_in_each_boundary": wandb.plot.bar(table, "boundary", "rate",
-                                                           title="PASS_RATE Bar Chart")})
-        table = wandb.Table(data=info_dict['max_prob_boundary'],
-                            columns=["boundary", "rate"])
 
-        wandb.log({"max_prob_in_each_boundary": wandb.plot.bar(table, "boundary", "rate",
-                                                               title="MAX_Prob Bar Chart")})
 
     def produce_2d_slice(self, image, label, pred):
         image = image[0, 0:1, :, :, 20:61:10].permute(3, 0, 1, 2).repeat(1, 3, 1, 1)
@@ -60,29 +53,7 @@ class Tensorboard:
                                                caption="y")]})
         return
 
-    def produce_3d_gif(self, current_epoch,
-                       result, name="?", color="red"):
-        current_path = os.path.join(self.visual_results_root, str(current_epoch))
-        self._safe_mkdir(parent_path=self.visual_results_root, build_path=str(current_epoch))
-        self._safe_mkdir(parent_path=current_path, build_path=name)
-        ax = plt.figure().add_subplot(projection='3d')
-        ax.voxels(result, facecolors=color)
-        ax.grid(False)
-        plt.axis('off')
-        for ii in [0, 90, 180, 270]:
-            ax.view_init(elev=10., azim=ii)
-            plt.savefig(os.path.join(current_path, name, "{}.png".format(ii)),
-                        bbox_inches='tight', pad_inches=0, dpi=200)
-        images = []
-        for filename in sorted(sorted(os.listdir(os.path.join(current_path, name)),
-                                      key=lambda x: int(x.split('.')[0]))):
-            images.append(imageio.imread(os.path.join(current_path, name, filename)))
-        imageio.mimsave(current_path + '/{}.gif'.format(name), images, duration=1)
-        wandb.log({"{}_gif".format(name): wandb.Video(current_path + '/{}.gif'.format(name),
-                                                      fps=4, format="gif")})
-        plt.clf()
-        plt.close('all')
-        return
+
 
     @staticmethod
     def _safe_mkdir(parent_path, build_path=None):
