@@ -81,7 +81,7 @@ def main(cmd_line_var):
 
     scaler = GradScaler()
 
-    all_patients_path = get_all_patients_dir_paths(config.dataPath)[0:100]
+    all_patients_path = get_all_patients_dir_paths(config.dataPath)
 
     if config.use_wandb:
         mywandb = get_wandb(config)
@@ -139,7 +139,7 @@ if __name__ == '__main__':
                         help="select the architecture in use")
 
     parser.add_argument("--dataPath",default=os.path.join('data',"resize_128_data"), help="wandb key for docker")
-    parser.add_argument("--batch_size",default=2, type=int)
+    parser.add_argument("--batch_size",default=1, type=int)
 
     cmd_line_var = parser.parse_args()
     main(cmd_line_var)

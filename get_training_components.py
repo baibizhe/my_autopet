@@ -32,8 +32,8 @@ def get_model(config)->torch.nn.Module:
         model = SwinUNETR(img_size=config.target_size,
                           in_channels=input_channel,
                           out_channels=output_channel,
-                          feature_size=12,
-                          depths=(1, 1, 1, 1),
+                            feature_size=config.feature_size,
+                          depths=config.model_depth,
                           norm_name="batch",
                           drop_rate=config.drop_out_rate,
                           )
