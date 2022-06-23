@@ -1,5 +1,6 @@
 import argparse
 import os.path
+import random
 
 import torch.nn
 from sklearn.model_selection import KFold
@@ -28,8 +29,10 @@ def cal_metrics(output, label,config):
 
 
 def train_one_epoch(model, train_loader, optimizer, loss_function,scaler):
+    random_idx = random.randint(0,len(train_loader)-1)
     dice_sc,losses = AverageMeter(),AverageMeter()
     inner_bar = tqdm(train_loader, desc = 'training', leave = False)
+    output_upload, label_upload = None,None
     for idx,(image,label) in enumerate(train_loader):
         # print("cur itr {} total {} itr".format(idx,len(train_loader)))
         optimizer.zero_grad()
@@ -45,16 +48,21 @@ def train_one_epoch(model, train_loader, optimizer, loss_function,scaler):
         dice_sc_avg, false_pos_vol_avg, false_neg_vol_avg = cal_metrics(output,label,config)
         dice_sc.update(dice_sc_avg)
         inner_bar.update(1)
+        if idx == random_idx:
+            output_upload, label_upload = output,label
+
         # metrics_info = {"dice_sc":dice_sc.avg,
         #                 "losses":losses.avg}
         # print(metrics_info)
     metrics_info = {"train dice_sc": dice_sc.avg,
                     "train losses": losses.avg}
-    return  metrics_info
+    return  metrics_info,label_upload ,output_upload
 
 
 def valid_one_epoch(model, valid_loader, loss_function):
     dice_sc, losses = AverageMeter(), AverageMeter()
+    random_idx = random.randint(0,len(valid_loader)-1)
+    output_upload, label_upload = None,None
 
     for idx, (image, label) in enumerate(valid_loader):
         image, label = image.to(config.device), label.float().squeeze(1).to(config.device)
@@ -65,6 +73,8 @@ def valid_one_epoch(model, valid_loader, loss_function):
                 losses.update(loss.item(), image.shape[0])
             dice_sc_avg, false_pos_vol_avg, false_neg_vol_avg = cal_metrics(output, label, config)
             dice_sc.update(dice_sc_avg)
+            if idx == random_idx:
+                output_upload, label_upload = output, label
         # metrics_info = {"dice_sc":dice_sc.avg,
         #                 "false_pos_vol":false_pos_vol.avg,
         #                 "false_neg_vol":false_neg_vol.avg,
@@ -72,7 +82,7 @@ def valid_one_epoch(model, valid_loader, loss_function):
         # print(metrics_info)
     metrics_info = {"valid dice_sc": dice_sc.avg,
                     "valid losses": losses.avg}
-    return metrics_info
+    return metrics_info,label_upload,output_upload
 
 
 def main(cmd_line_var):
@@ -81,7 +91,7 @@ def main(cmd_line_var):
 
     scaler = GradScaler()
 
-    all_patients_path = get_all_patients_dir_paths(config.dataPath)[0:100]
+    all_patients_path = get_all_patients_dir_paths(config.dataPath)[0:20]
 
     if config.use_wandb:
         mywandb = get_wandb(config)
@@ -108,14 +118,15 @@ def main(cmd_line_var):
                                                              config,
                                                              )
 
-                train_metrics = train_one_epoch(model=model,
+                train_metrics,train_label,train_predict  = train_one_epoch(model=model,
                                                   train_loader= train_loader,
                                                   optimizer=optimizer,
                                                 loss_function=loss_function,
                                                 scaler=scaler)
+                mywandb.upload_wandb_image(train_label=train_label,train_predict=train_predict )
                 mywandb.upload_wandb_info(info_dict=train_metrics)
                 # print("train_metrics",train_metrics)
-                valid_metrics = valid_one_epoch(model=model,
+                valid_metrics,label_upload,output_upload = valid_one_epoch(model=model,
                                               valid_loader= valid_loader,
                                                 loss_function=loss_function
                                                 )

@@ -4,6 +4,12 @@ import torchvision
 import os
 import matplotlib.pyplot as plt
 import imageio
+import numpy as np
+try:
+    from skimage.util.montage import montage2d
+except ImportError as e:
+    # print('scikit-image is too new, ',e)
+    from skimage.util import montage as montage2d
 
 
 class Tensorboard:
@@ -68,4 +74,16 @@ class Tensorboard:
     def save_ckpt(self, model, name):
         torch.save(model.state_dict(), os.path.join(self.ckpt_path, name))
         return
+
+    def upload_wandb_image(self, train_predict, train_label):
+        label_image = torch.argmax(train_label[0], 0)
+        label_image_middle = label_image[int(len(label_image) * 0.4):int(len(label_image) * 0.6)]
+        square_img_label_image = montage2d(label_image_middle.cpu().detach().numpy())
+
+
+        predict_image = torch.argmax(train_predict[0], 0)
+        predict_image_middle = predict_image[int(len(predict_image) * 0.4):int(len(predict_image) * 0.6)]
+        square_img_predict_image = montage2d(predict_image_middle.cpu().detach().numpy())
+        self.tensor_board.log({"label_image": wandb.Image((square_img_label_image*255),caption="label_image")})
+        self.tensor_board.log({"predict_image": wandb.Image((square_img_predict_image*255),caption="predict_image")})
 
