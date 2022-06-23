@@ -4,3 +4,8 @@ scikit-learn
 imageio
 matplotlib
 torchsummary
+easydict
+wandb
+matplotlib
+cc3d
+ein
