@@ -16,7 +16,7 @@ def read_CTres_and_SUV_image(patientPath):
     imgSEG = sitk.ReadImage(seg_Path)
     imgSEG = sitk.GetArrayFromImage(imgSEG)
     # return imgCTres,imgSUV,imgSEG
-    return  np.concatenate((imgCTres,imgSUV),0) ,    imgSEG
+    return  np.concatenate((imgCTres,imgSUV),1) ,    imgSEG
 
 
 # data_dir="data/FDG-PET-CT-Lesions/PETCT_04a4e1c874/11-18-2001-NA-PET-CT Ganzkoerper  primaer mit KM-96019"
