@@ -6,17 +6,17 @@ import os
 def read_CTres_and_SUV_image(patientPath):
     CTres_Path = os.path.join(patientPath, "CTres.nii.gz")
     imgCTres = sitk.ReadImage(CTres_Path)
-    imgCTres = sitk.GetArrayFromImage(imgCTres)
+    imgCTres = np.expand_dims(sitk.GetArrayFromImage(imgCTres),axis=0)
 
     SUV_Path = os.path.join(patientPath, "SUV.nii.gz")
     imgSUV = sitk.ReadImage(SUV_Path)
-    imgSUV = sitk.GetArrayFromImage(imgSUV)
+    imgSUV = np.expand_dims(sitk.GetArrayFromImage(imgSUV),axis=0)
     
     seg_Path = os.path.join(patientPath, "SEG.nii.gz")
     imgSEG = sitk.ReadImage(seg_Path)
-    imgSEG = sitk.GetArrayFromImage(imgSEG)
+    imgSEG = np.expand_dims(sitk.GetArrayFromImage(imgSEG),axis=0)
     # return imgCTres,imgSUV,imgSEG
-    return  np.concatenate((imgCTres,imgSUV),1) ,    imgSEG
+    return  np.concatenate((imgCTres,imgSUV),0) ,    imgSEG
 
 
 # data_dir="data/FDG-PET-CT-Lesions/PETCT_04a4e1c874/11-18-2001-NA-PET-CT Ganzkoerper  primaer mit KM-96019"
