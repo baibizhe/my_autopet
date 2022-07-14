@@ -138,7 +138,7 @@ if __name__ == '__main__':
                         choices=["SwinUNETR","VNET","UNETR"],
                         help="select the architecture in use")
 
-    parser.add_argument("--dataPath",default=os.path.join('data',"resize_128_data"), help="wandb key for docker")
+    parser.add_argument("--dataPath",default=os.path.join('data',"resize_128_data"))
     parser.add_argument("--batch_size",default=1, type=int)
 
     cmd_line_var = parser.parse_args()
