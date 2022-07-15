@@ -36,6 +36,13 @@ for i,patient in enumerate(all_patients):
         train_image_path = os.path.join(patient_dir,"training_data_image.npy")
         # train_label_path = os.path.join(patient_dir,"training_data_label.npy")
         train_marker_path = os.path.join(patient_dir,"training_data_marker.npy")
+        PET_path = os.path.join(patient_dir,"PET.nii.gz")
+        CT_path = os.path.join(patient_dir,"CT.nii.gz")
+        if os.path.exists(PET_path):
+            os.remove(PET_path)
+        if os.path.exists(CT_path):
+            os.remove(CT_path)
+
         if (label.sum()==0):
             wealthy_p_count +=1
             np.save(train_image_path,image)
