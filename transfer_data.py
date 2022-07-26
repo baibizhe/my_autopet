@@ -56,7 +56,7 @@ for i,patient in enumerate(all_patients):
             # np.save(train_label_path,label)
             np.save(train_marker_path,np.array([1]))
 
-            print(str(i)+"patient {} is  healthy , image shape is {} label shape is {}".format(patient,image.shape , label.shape),flush=True)
+            print(str(i)+"patient {} is unhealthy , image shape is {} label shape is {}".format(patient,image.shape , label.shape),flush=True)
 print(wealthy_p_count/len(all_patients))
 
 
