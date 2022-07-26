@@ -22,10 +22,12 @@ def classification(config):
     val_interval = 2
     best_metric = -1
     train_loader, val_loader = get_class_data_loaders(None)
+    print(" train loader length {} val length {}".format(len(train_loader),len(val_loader)))
     sigmoid_l = torch.nn.Sigmoid()
     for epoch in range(5000):
 
         train_info ={}
+        # loss_one_epoch = 0
         loss_one_epoch = train_one_epoch(device,  loss_function, model, optimizer, sigmoid_l, train_loader)
 
         if epoch % val_interval == 0:

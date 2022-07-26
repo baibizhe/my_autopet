@@ -38,7 +38,7 @@ def get_class_data_loaders(config):
     ]
     print(data_dicts)
     splitIndex = int(len(imgPaths) * 0.8)
-    train_files, val_files = data_dicts[:splitIndex], data_dicts[splitIndex:]
+    train_files, val_files = data_dicts[:], data_dicts[splitIndex:]
     train_transforms = Compose([
         LoadImaged(keys=["image", "label"]),
         Resized(spatial_size=(128, 128, 128), keys=["image"]),
