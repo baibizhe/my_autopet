@@ -36,12 +36,12 @@ for i,patient in enumerate(all_patients):
         train_image_path = os.path.join(patient_dir,"training_data_image.npy")
         # train_label_path = os.path.join(patient_dir,"training_data_label.npy")
         train_marker_path = os.path.join(patient_dir,"training_data_marker.npy")
-        PET_path = os.path.join(patient_dir,"PET.nii.gz")
-        CT_path = os.path.join(patient_dir,"CT.nii.gz")
-        if os.path.exists(PET_path):
-            os.remove(PET_path)
-        if os.path.exists(CT_path):
-            os.remove(CT_path)
+        SUV_path = os.path.join(patient_dir,"SUV.nii.gz")
+        CTres_path = os.path.join(patient_dir,"CTres.nii.gz")
+        if os.path.exists(SUV_path):
+            os.remove(SUV_path)
+        if os.path.exists(CTres_path):
+            os.remove(CTres_path)
 
         if (label.sum()==0):
             wealthy_p_count +=1
@@ -49,14 +49,14 @@ for i,patient in enumerate(all_patients):
             # np.save(train_label_path,label)
             np.save(train_marker_path,np.array([0]))
 
-            print(str(i)+"patient {} is  healthy shape is {}".format(patient,image.shape),flush=True)
+            print(str(i)+"patient {} is  healthy , image shape is {} label shape is {}".format(patient,image.shape , label.shape),flush=True)
 
         else:
             np.save(train_image_path,image)
             # np.save(train_label_path,label)
             np.save(train_marker_path,np.array([1]))
 
-            print(str(i)+"patient {} is not healthy with labels {}  shape is {} ".format(patient,np.unique(label),image.shape),flush=True)
+            print(str(i)+"patient {} is  healthy , image shape is {} label shape is {}".format(patient,image.shape , label.shape),flush=True)
 print(wealthy_p_count/len(all_patients))
 
 
