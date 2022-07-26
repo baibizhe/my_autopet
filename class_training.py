@@ -4,7 +4,7 @@ import monai
 import torch
 from timm.utils import AverageMeter
 from TrainConfig import config
-
+from models.MobilenetV2 import get_model
 from get_class_data_loaders import get_class_data_loaders
 from get_training_components import get_wandb
 
@@ -14,6 +14,7 @@ def classification(config):
         mywandb = get_wandb(config)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = monai.networks.nets.Densenet(spatial_dims=3, in_channels=2, out_channels=2).to(device)
+    # model = get_model(num_classes=2, sample_size=128, width_mult=1., in_channels=2).cuda()
     loss_function = torch.nn.CrossEntropyLoss()
     # optimizer = torch.optim.SGD(model.parameters(), 1e-2, nesterov=True,momentum=0.99)
     optimizer = torch.optim.AdamW(model.parameters(), 1e-5)
@@ -22,7 +23,8 @@ def classification(config):
     best_metric = -1
     train_loader, val_loader = get_class_data_loaders(None)
     sigmoid_l = torch.nn.Sigmoid()
-    for epoch in range(500):
+    for epoch in range(5000):
+
         train_info ={}
         loss_one_epoch = train_one_epoch(device,  loss_function, model, optimizer, sigmoid_l, train_loader)
 
@@ -38,7 +40,7 @@ def classification(config):
         train_info["classification valid acc"] = valid_metric_epoch
         if config.use_wandb:
             mywandb.upload_wandb_info(train_info)
-    print(train_info)
+        print("epoch {} matrics {}".format(epoch,train_info))
 
 
 
@@ -76,4 +78,5 @@ def train_one_epoch(device,  loss_function, model, optimizer, sigmoid_l, train_l
     return losses.avg
 
 if __name__ == "__main__":
+    config.run_name = "autopte class training"
     classification(config)

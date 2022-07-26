@@ -16,12 +16,7 @@ class Tensorboard:
     def __init__(self, config):
         os.system("wandb login")
         os.system("wandb {}".format("online" if config.use_wandb else "offline"))
-        config.run_name = "autopet(arch = {}, resize={} ,aug={} ,depth= {} ,f_size={} )".format(str(config.model),
-                                                                      str(config.target_size[0]),
-                                                                      str(config.aug_mode),
-                                                                        str(config.model_depth),
-                                                                        str(config.feature_size),
-                                                                            )
+
         self.tensor_board = wandb.init(project=config.project_name,
                                        name=config.run_name,
                                        config=config)

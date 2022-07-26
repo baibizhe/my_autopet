@@ -3,7 +3,7 @@ import os
 from types import SimpleNamespace
 
 import matplotlib.pyplot as plt
-from monai.data import DataLoader, Dataset
+from monai.data import DataLoader, Dataset,SmartCacheDataset
 from monai.transforms import (
     EnsureTyped,
     Compose,
@@ -60,12 +60,12 @@ def get_class_data_loaders(config):
 
     # use batch_size=2 to load images and use RandCropByPosNegLabeld
     # to generate 2 x 4 images for network training
-    train_loader = DataLoader(train_ds, batch_size=16, shuffle=True, num_workers=3)
+    train_loader = DataLoader(train_ds, batch_size=4, shuffle=True, num_workers=3)
 
     val_ds = Dataset(
         data=val_files, transform=val_transforms)
 
-    val_org_loader = DataLoader(val_ds, batch_size=16, shuffle=False, num_workers=3)
+    val_org_loader = DataLoader(val_ds, batch_size=4, shuffle=False, num_workers=3)
 
     check_ds = Dataset(data=val_files, transform=val_transforms)
     check_loader = DataLoader(check_ds, batch_size=1)
