@@ -123,7 +123,7 @@ def get_model(device, config):
 
     model = monai.networks.nets.SwinUNETR(img_size=config.patchshape, in_channels=2, out_channels=2,
                                           feature_size=48).cuda()
-
+    # model = monai.networks.nets.VNet(in_channels=2,out_channels=2)
     model.load_from(torch.load("model_swinvit.pt"))
     # init_weights(model, init_type="kaiming")
 
@@ -201,15 +201,14 @@ def main():
     DiceLossFun = monai.losses.DiceCELoss(to_onehot_y=True,
                                           softmax=True)
 
-    for param in model.swinViT.parameters():
-        param.requires_grad = False
+
     with trange(epochs) as t:
         for epoch in t:
             trainLosses, trainDiceCoefficients, validLosses, validDiceCoefficients = AverageMeter(), AverageMeter(), AverageMeter(), AverageMeter()
             validLossEpoch, validDiceEpoch, valid_dice = 0, 0, 0
-            if epoch == 3:
-                for param in model.swinViT.parameters():
-                    param.requires_grad = True
+            # if epoch == 3:
+            #     for param in model.swinViT.parameters():
+            #         param.requires_grad = True
             t.set_description('Epoch %i' % epoch)
             trainLossEpoch, trainDiceEpoch = train_epoch(model=model,
                                                          train_loader=train_loader,
@@ -221,11 +220,11 @@ def main():
                                                          trainepochs=epochs)
             # trainLossEpoch, trainDiceEpoch = 0,0
 
-            # if epoch % 2 == 0:
-            #     validDiceEpoch,out_up,label_up  = val_epoch_metrics(model=model,
-            #                                                        val_org_loader=val_org_loader,
-            #                                                        post_transforms=post_transforms,
-            #                                                        patchshape=args.patchshape)
+            if epoch % 2 == 0:
+                validDiceEpoch,out_up,label_up  = val_epoch_metrics(model=model,
+                                                                   val_org_loader=val_org_loader,
+                                                                   post_transforms=post_transforms,
+                                                                   patchshape=args.patchshape)
 
             trainLosses.update(trainLossEpoch)
             trainDiceCoefficients.update(trainDiceEpoch)

@@ -30,7 +30,7 @@ HistogramNormalized,
 )
 from monai.transforms.croppad.dictionary import ResizeWithPadOrCropd, RandCropByLabelClassesd, RandSpatialCropd, \
     RandSpatialCropSamplesd
-from monai.data import  DataLoader, Dataset, decollate_batch
+from monai.data import DataLoader, Dataset, decollate_batch, SmartCacheDataset
 from  types import  SimpleNamespace
 import matplotlib.pyplot as plt
 import os
@@ -91,22 +91,24 @@ def get_data_loaders(config):
     val_org_transforms =     Compose(
         [
             LoadImaged(keys=["image", "label"]),
-            EnsureChannelFirstd(keys=["image", "label"]),
-            NormalizeIntensityd(keys="image", nonzero=True, channel_wise=True),
-            RandScaleIntensityd(keys="image", factors=0.1, prob=1.0),
-            CropForegroundd(keys=["image", "label"], source_key="image"),
-            # RandSpatialCropd(
-            #     keys=["image", "label"],
-            #     label_key="label",
-            #     spatial_size=config.patchshape,
-            #         num_samples=4,
-            # ),
+            EnsureChannelFirstd(keys=[ "label"]),
+            Orientationd(keys=["label"], axcodes="SRA"),
+            CropForegroundd(keys=["image", "label"], source_key="image",select_fn=threshold_at_one),
+            HistogramNormalized(keys=["image"]),
+
+            RandSpatialCropSamplesd(
+                keys=["image", "label"],
+                roi_size=(96,96,96),
+                random_center=True,
+                num_samples=4,
+                random_size=False,
+            ),
 
             EnsureTyped(keys=["image", "label"]),
         ]
     )
 
-    train_ds = Dataset(
+    train_ds = SmartCacheDataset(
         data=train_files, transform=train_transforms,
          )
     # train_ds = Dataset(data=train_files, transform=train_transforms)
@@ -115,7 +117,7 @@ def get_data_loaders(config):
     # to generate 2 x 4 images for network training
     train_loader = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=3)
 
-    val_org_ds = Dataset(
+    val_org_ds = SmartCacheDataset(
         data=val_files, transform=val_org_transforms)
 
     post_transforms = Compose([

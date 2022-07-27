@@ -28,7 +28,7 @@ def classification(config):
 
         train_info ={}
         # loss_one_epoch = 0
-        loss_one_epoch = train_one_epoch(device,  loss_function, model, optimizer, sigmoid_l, train_loader)
+        loss_one_epoch,train_acc = train_one_epoch(device,  loss_function, model, optimizer, sigmoid_l, train_loader)
 
         if epoch % val_interval == 0:
             valid_metric_epoch = valid_one_epoch(device,  model, sigmoid_l, val_loader)
@@ -39,6 +39,8 @@ def classification(config):
                 torch.save(model.state_dict(), os.path.join("saved_models", "classification_model"))
                 print("saved new best metric model")
         train_info["classification train loss"] = loss_one_epoch
+        train_info["classification train acc"] = train_acc
+
         train_info["classification valid acc"] = valid_metric_epoch
         if config.use_wandb:
             mywandb.upload_wandb_info(train_info)
@@ -68,7 +70,8 @@ def valid_one_epoch( device,  model, sigmoid_l, val_loader):
 def train_one_epoch(device,  loss_function, model, optimizer, sigmoid_l, train_loader):
     model.train()
     losses = AverageMeter()
-
+    num_correct = 0.0
+    metric_count = 0
     for batch_data in train_loader:
         inputs, labels = batch_data["image"].to(device), batch_data["label"].long().to(device)
         optimizer.zero_grad()
@@ -76,8 +79,15 @@ def train_one_epoch(device,  loss_function, model, optimizer, sigmoid_l, train_l
         loss = loss_function(outputs, labels.squeeze(1))
         loss.backward()
         optimizer.step()
+        with torch.no_grad():
+            # print(val_outputs,val_outputs.argmax(dim=1),val_labels)
+            value = torch.eq(outputs.argmax(dim=1), labels.squeeze(1))
+            metric_count += len(value)
+            num_correct += value.sum().item()
         losses.update(loss.item(),inputs.shape[0])
-    return losses.avg
+    train_acc = num_correct / metric_count
+
+    return losses.avg,train_acc
 
 if __name__ == "__main__":
     config.run_name = "autopte class training"
