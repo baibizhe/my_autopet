@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='autoPET Semantic Segmentation')
     # network architectures
-    parser.add_argument("-a", "--model", default='SwinUNETR', type=str,
+    parser.add_argument("--model", default='SwinUNETR', type=str,
                         choices=["SwinUNETR","VNET","UNETR"],
                         help="select the architecture in use")
 

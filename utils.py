@@ -3,7 +3,7 @@ import os.path
 import numpy as np
 import nibabel as nib
 import pathlib as plb
-import cc3d
+# import cc3d
 import csv
 import sys
 
@@ -26,29 +26,29 @@ def con_comp(seg_array):
     return conn_comp
 
 
-def false_pos_pix(gt_array, pred_array):
-    # compute number of voxels of false positive connected components in prediction mask
-    pred_conn_comp = con_comp(pred_array)
+# def false_pos_pix(gt_array, pred_array):
+#     # compute number of voxels of false positive connected components in prediction mask
+#     pred_conn_comp = con_comp(pred_array)
+#
+#     false_pos = 0
+#     for idx in range(1, pred_conn_comp.max() + 1):
+#         comp_mask = np.isin(pred_conn_comp, idx)
+#         if (comp_mask * gt_array).sum() == 0:
+#             false_pos = false_pos + comp_mask.sum()
+#     return false_pos
 
-    false_pos = 0
-    for idx in range(1, pred_conn_comp.max() + 1):
-        comp_mask = np.isin(pred_conn_comp, idx)
-        if (comp_mask * gt_array).sum() == 0:
-            false_pos = false_pos + comp_mask.sum()
-    return false_pos
 
-
-def false_neg_pix(gt_array, pred_array):
-    # compute number of voxels of false negative connected components (of the ground truth mask) in the prediction mask
-    gt_conn_comp = con_comp(gt_array)
-
-    false_neg = 0
-    for idx in range(1, gt_conn_comp.max() + 1):
-        comp_mask = np.isin(gt_conn_comp, idx)
-        if (comp_mask * pred_array).sum() == 0:
-            false_neg = false_neg + comp_mask.sum()
-
-    return false_neg
+# def false_neg_pix(gt_array, pred_array):
+#     # compute number of voxels of false negative connected components (of the ground truth mask) in the prediction mask
+#     gt_conn_comp = con_comp(gt_array)
+#
+#     false_neg = 0
+#     for idx in range(1, gt_conn_comp.max() + 1):
+#         comp_mask = np.isin(gt_conn_comp, idx)
+#         if (comp_mask * pred_array).sum() == 0:
+#             false_neg = false_neg + comp_mask.sum()
+#
+#     return false_neg
 
 
 def dice_score(mask1, mask2):
