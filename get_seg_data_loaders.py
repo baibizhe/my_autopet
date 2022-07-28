@@ -112,7 +112,7 @@ def get_data_loaders(config):
         ]
     )
 
-    train_ds = Dataset(
+    train_ds = SmartCacheDataset(
         data=train_files, transform=train_transforms,
          )
     # train_ds = Dataset(data=train_files, transform=train_transforms)
@@ -121,7 +121,7 @@ def get_data_loaders(config):
     # to generate 2 x 4 images for network training
     train_loader = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=0)
 
-    val_org_ds = Dataset(
+    val_org_ds = SmartCacheDataset(
         data=val_files, transform=val_org_transforms)
 
     post_transforms = Compose([
