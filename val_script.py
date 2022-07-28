@@ -5,7 +5,6 @@ import cc3d
 import csv
 import sys
 
-
 def nii2numpy(nii_path):
     # input: path of NIfTI segmentation file, output: corresponding numpy array and voxel_vol in ml
     mask_nii = nib.load(str(nii_path))
@@ -52,7 +51,7 @@ def dice_score(mask1,mask2):
     # compute foreground Dice coefficient
     overlap = (mask1*mask2).sum()
     sum = mask1.sum()+mask2.sum()
-    dice_score = 2*overlap/sum
+    dice_score = (2*overlap+1)/(sum+1)
     return dice_score
 
 
@@ -70,20 +69,20 @@ def compute_metrics(nii_gt_path, nii_pred_path):
 
 
 if __name__ == "__main__":
-
-    nii_gt_path, nii_pred_path = sys.argv
-
-    nii_gt_path = plb.Path(nii_gt_path)
-    nii_pred_path = plb.Path(nii_pred_path)
-    dice_sc, false_pos_vol, false_neg_vol = compute_metrics(nii_gt_path, nii_pred_path)
-
-    csv_header = ['gt_name', 'dice_sc', 'false_pos_vol', 'false_neg_vol']
-    csv_rows = [nii_gt_path.name,dice_sc, false_pos_vol, false_neg_vol]
-
-    with open("metrics.csv", "w", newline='') as f:
-        writer = csv.writer(f, delimiter=',')
-        writer.writerow(csv_header) 
-        writer.writerows(csv_rows)
+    nii2numpy("E:\\PycharmProjects\\autopet\\data\\FDG-PET-CT-Lesions\\PETCT_0b57b247b6\\05-02-2002-NA-PET-CT Ganzkoerper  primaer mit KM-42966\\SEG.nii.gz")
+    # nii_gt_path, nii_pred_path = sys.argv
+    #
+    # nii_gt_path = plb.Path(nii_gt_path)
+    # nii_pred_path = plb.Path(nii_pred_path)
+    # dice_sc, false_pos_vol, false_neg_vol = compute_metrics(nii_gt_path, nii_pred_path)
+    #
+    # csv_header = ['gt_name', 'dice_sc', 'false_pos_vol', 'false_neg_vol']
+    # csv_rows = [nii_gt_path.name,dice_sc, false_pos_vol, false_neg_vol]
+    #
+    # with open("metrics.csv", "w", newline='') as f:
+    #     writer = csv.writer(f, delimiter=',')
+    #     writer.writerow(csv_header)
+    #     writer.writerows(csv_rows)
 
 
 

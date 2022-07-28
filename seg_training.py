@@ -38,6 +38,9 @@ def train_epoch(model, train_loader, optimizer, device, epoch, trainepochs, loss
 
     for batch_idx, batch in enumerate(train_loader):
         data, target = batch["image"].to(device), batch["label"].to(device).long()
+        if target.sum() == 0 :
+            continue
+        print("target sun{}".format(target.sum()))
         optimizer.zero_grad()
         with autocast():
             output = model(data)

@@ -72,16 +72,20 @@ def get_data_loaders(config):
             EnsureChannelFirstd(keys=[ "label"]),
             Orientationd(keys=["label"], axcodes="SRA"),
             CropForegroundd(keys=["image", "label"], source_key="image",select_fn=threshold_at_one),
-            HistogramNormalized(keys=["image"]),
+            # HistogramNormalized(keys=["image"]),
 
             RandSpatialCropSamplesd(
                 keys=["image", "label"],
                 roi_size=(96,96,96),
-                random_center=True,
-                num_samples=4,
+                num_samples=1,
                 random_size=False,
             ),
-
+            RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=0),
+            RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=1),
+            RandFlipd(keys=["image", "label"], prob=0.5, spatial_axis=2),
+            NormalizeIntensityd(keys="image", nonzero=True, channel_wise=True),
+            RandScaleIntensityd(keys="image", factors=0.1, prob=1.0),
+            RandShiftIntensityd(keys="image", offsets=0.1, prob=1.0),
             EnsureTyped(keys=["image", "label"]),
         ]
     )
@@ -100,7 +104,7 @@ def get_data_loaders(config):
                 keys=["image", "label"],
                 roi_size=(96,96,96),
                 random_center=True,
-                num_samples=4,
+                num_samples=1,
                 random_size=False,
             ),
 
@@ -108,16 +112,16 @@ def get_data_loaders(config):
         ]
     )
 
-    train_ds = SmartCacheDataset(
+    train_ds = Dataset(
         data=train_files, transform=train_transforms,
          )
     # train_ds = Dataset(data=train_files, transform=train_transforms)
 
     # use batch_size=2 to load images and use RandCropByPosNegLabeld
     # to generate 2 x 4 images for network training
-    train_loader = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=3)
+    train_loader = DataLoader(train_ds, batch_size=1, shuffle=True, num_workers=0)
 
-    val_org_ds = SmartCacheDataset(
+    val_org_ds = Dataset(
         data=val_files, transform=val_org_transforms)
 
     post_transforms = Compose([
@@ -135,7 +139,7 @@ def get_data_loaders(config):
         # AsDiscreted(keys="pred", argmax=True, to_onehot=2),
         # AsDiscreted(keys="label", to_onehot=2),
     ])
-    val_org_loader = DataLoader(val_org_ds, batch_size=1,shuffle=False, num_workers=3)
+    val_org_loader = DataLoader(val_org_ds, batch_size=1,shuffle=False, num_workers=0)
 
     check_ds = Dataset(data=train_files, transform=train_transforms)
     check_loader = DataLoader(check_ds, batch_size=1)
