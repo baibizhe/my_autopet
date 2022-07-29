@@ -2,6 +2,8 @@ import argparse
 import os
 import random
 from types import SimpleNamespace
+
+from skimage.util import montage
 from torch.nn import init
 
 import matplotlib.pyplot as plt
@@ -37,13 +39,12 @@ def train_epoch(model, train_loader, optimizer, device, epoch, trainepochs, loss
         with autocast():
             output = model(data)
 
-            loss = loss_fn1(output.unsqueeze(2), target)  # * 1000
-            # loss += loss_fn2(output, target) * 0.2
+            # loss = loss_fn1(output.unsqueeze(2), target)  # * 1000
+            loss = loss_fn2(output, target)
             output = torch.argmax(output, 1)
 
         dice_coefficients.update(dice_score(output.detach().cpu().numpy(), target.cpu().numpy()), len(batch))
         losses.update(loss.item(), data.size(0))
-        torch.nn.utils.clip_grad_norm_(model.parameters(), 100)
 
         scaler.scale(loss).backward()
         scaler.step(optimizer)
@@ -55,7 +56,8 @@ def train_epoch(model, train_loader, optimizer, device, epoch, trainepochs, loss
 def val_epoch_metrics(model, val_org_loader, post_transforms, patchshape):
     model.eval()
     dice_coefficients = AverageMeter()
-    out_up , label_up =None,None
+    out_up , label_up , input_up =None,None,None
+    currnt_sum_seg_not_zero = 0
     with torch.no_grad():
         for idx, val_data in enumerate(val_org_loader):
             val_inputs = val_data["image"].cuda()
@@ -68,12 +70,14 @@ def val_epoch_metrics(model, val_org_loader, post_transforms, patchshape):
             val_outputs, val_labels = from_engine(["pred", "label"])(val_data)
             dice_coefficients.update(
                 dice_score(val_outputs[0].numpy().astype(int), val_labels[0].numpy().astype(int)), 1)
-            if idx == 1:
-                out_up = val_outputs[0].cpu()[0].numpy()[:, :, 60]
-                label_up = val_labels[0].cpu()[0].numpy()[:, :, 60]
+            if val_labels[0].sum().sum() > currnt_sum_seg_not_zero:
+                currnt_sum_seg_not_zero = val_labels[0].sum().sum() #返回最大值
+                out_up = val_outputs
+                label_up = val_labels
+                input_up = val_inputs
 
 
-    return  dice_coefficients.avg,out_up,label_up
+    return  dice_coefficients.avg,out_up[0][0],label_up[0][0],input_up[0][0]
 
 def init_weights(net, init_type="normal", init_gain=0.02):
     """Initialize network weights.
@@ -118,7 +122,7 @@ def get_model(device, config):
 
     model = monai.networks.nets.SwinUNETR(img_size=config.patchshape, in_channels=2, out_channels=2,
                                           feature_size=48).cuda()
-    # model = monai.networks.nets.VNet(in_channels=2,out_channels=2)
+    # model = monai.networks.nets.VNet(in_channels=2,out_channels=2,dropout_prob=0.1)
     model.load_from(torch.load("model_swinvit.pt"))
     # init_weights(model, init_type="kaiming")
 
@@ -185,7 +189,7 @@ def main():
 
     optimizer = eval(args.optimizer)(model.parameters(), lr=args.lr, weight_decay=1e-5)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.95, last_epoch=-1)
-    warmup_epochs = 3
+    warmup_epochs = 2
     T_mult = 2
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=warmup_epochs,
                                                                      T_mult=T_mult)
@@ -216,10 +220,28 @@ def main():
             # trainLossEpoch, trainDiceEpoch = 0,0
 
             if epoch % 2 == 0:
-                validDiceEpoch,out_up,label_up  = val_epoch_metrics(model=model,
+                validDiceEpoch,out_up,label,image_CTres  = val_epoch_metrics(model=model,
                                                                    val_org_loader=val_org_loader,
                                                                    post_transforms=post_transforms,
                                                                    patchshape=args.patchshape)
+                non_zero_idx = torch.where(label.sum((1, 2)) > 0)
+                image_CTres = image_CTres[non_zero_idx].cpu().numpy()
+                label = label[non_zero_idx].cpu().numpy()
+                out_up = out_up[non_zero_idx].cpu().numpy()
+                # image_CTres += label
+                # image_SUV += label
+
+                fig, ax1 = plt.subplots(1, 1, figsize=(40, 40), dpi=200)
+                ax1.imshow(montage(image_CTres), cmap='bone')
+                plt.savefig(os.path.join("outPutImages",'image_CTres_epoch{}.png'.format(epoch)))
+                fig, ax1 = plt.subplots(1, 1, figsize=(40, 40), dpi=200)
+                ax1.imshow(montage(out_up), cmap='bone')
+                plt.savefig(os.path.join("outPutImages",'image_Pred_epoch{}.png'.format(epoch)))
+
+                fig, ax1 = plt.subplots(1, 1, figsize=(40, 40), dpi=200)
+                ax1.imshow(montage(label), cmap='bone')
+                plt.savefig(os.path.join("outPutImages",'image_label_epoch{}.png'.format(epoch)))
+
 
             trainLosses.update(trainLossEpoch)
             trainDiceCoefficients.update(trainDiceEpoch)
@@ -233,27 +255,7 @@ def main():
                            "lr": lr,
 
                            }
-            # if args.use_wandb:
-            #     mywandb.upload_wandb_info(info_dict=info_dict)
-            #     plt.figure("check", (12, 6))
-            #     plt.subplot(1, 2, 1)
-            #     plt.title("image")
-            #     plt.imshow(out_up)
-            #     plt.subplot(1, 2, 2)
-            #     plt.title("label")
-            #     plt.imshow(label_up)
-            #
-            #     mywandb.tensor_board.log({"data": wandb.Image(plt)})
-            # else:
-            #     plt.figure("check", (12, 6))
-            #     plt.subplot(1, 2, 1)
-            #     plt.title("image")
-            #     plt.imshow(out_up)
-            #     plt.subplot(1, 2, 2)
-            #     plt.title("label")
-            #     plt.imshow(label_up)
-            #
-            #     plt.savefig(os.path.join("outPutImages",'output{}.png'.format(epoch)))
+
             t.set_postfix(info_dict)
 
             if validDiceEpoch > valid_dice:
